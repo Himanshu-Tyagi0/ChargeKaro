@@ -37,9 +37,14 @@ export function AuthPage() {
       const r = res.data.user.role;
       navigate(r === 'admin' ? '/admin' : r === 'owner' ? '/owner' : '/map');
     } catch (err: unknown) {
-      const msg =
-        (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail ||
-        'Authentication failed. Please check your credentials.';
+      const axiosErr = err as { response?: { status?: number; data?: { detail?: string } } };
+      const detail = axiosErr?.response?.data?.detail;
+      const status = axiosErr?.response?.status;
+      const msg = detail
+        ? detail
+        : !axiosErr?.response || (status && status >= 500)
+          ? 'Backend server is still starting up or unreachable. Please wait a moment and try again.'
+          : 'Authentication failed. Please check your credentials.';
       setErrorMsg(msg);
     } finally {
       setSubmitting(false);

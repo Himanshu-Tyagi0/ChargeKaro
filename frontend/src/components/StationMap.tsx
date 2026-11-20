@@ -115,17 +115,27 @@ export function StationMap({
       marker.addTo(layer);
     });
 
-    if (!didFitInitialRef.current && stations.length > 1 && !selectedStationId && !routePlan) {
+    if (!didFitInitialRef.current && stations.length > 1 && !routePlan) {
       const bounds = L.latLngBounds(stations.map((s) => [s.latitude, s.longitude] as [number, number]));
       map.fitBounds(bounds, { padding: [36, 36], maxZoom: 12 });
       didFitInitialRef.current = true;
     }
   }, [stations, selectedStationId, userLocation, onSelectStation, routePlan]);
 
-  // Pan smoothly to selected station
+  const prevSelectedIdRef = useRef<number | null>(null);
+  // Pan smoothly when user changes selected station
   useEffect(() => {
     const map = mapRef.current;
-    if (!map || !selectedStationId) return;
+    if (!map || !selectedStationId) {
+      prevSelectedIdRef.current = selectedStationId;
+      return;
+    }
+    if (prevSelectedIdRef.current === null) {
+      prevSelectedIdRef.current = selectedStationId;
+      return;
+    }
+    if (prevSelectedIdRef.current === selectedStationId) return;
+    prevSelectedIdRef.current = selectedStationId;
     const found = stations.find((s) => s.id === selectedStationId);
     if (found) {
       map.panTo([found.latitude, found.longitude], { animate: true, duration: 0.45 });

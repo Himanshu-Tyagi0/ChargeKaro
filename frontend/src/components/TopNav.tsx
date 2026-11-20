@@ -14,6 +14,7 @@ export function TopNav() {
   const notifications = useAppStore((s) => s.notifications);
   const setNotifications = useAppStore((s) => s.setNotifications);
   const wsConnected = useAppStore((s) => s.wsConnected);
+  const demoRuntimeMode = useAppStore((s) => s.demoRuntimeMode);
 
   const [notifOpen, setNotifOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -187,7 +188,11 @@ export function TopNav() {
         <span>Demo Mode: Simulated Delhi-NCR stations, live telemetry &amp; mock UPI payments</span>
         <span aria-hidden="true"> · </span>
         <span className="font-mono text-[11px]">
-          {wsConnected ? 'Live stream active' : 'Reconnecting stream...'}
+          {demoRuntimeMode === 'standalone'
+            ? 'Standalone Demo · Live simulator active'
+            : wsConnected
+              ? 'Live stream active'
+              : 'Reconnecting stream...'}
         </span>
       </div>
 

@@ -1,11 +1,14 @@
 import { useEffect } from 'react';
 import { apiClient } from '../api/client';
+import { getWsBaseUrl } from '../api/config';
+import { stepStaticDemoSimulator } from '../api/staticDemoRuntime';
 import { useAppStore } from '../store/useAppStore';
 import type { ChargerStatus, Station } from '../types';
 
 export function useWebSockets(onRefreshStations?: () => void) {
   const accessToken = useAppStore((s) => s.accessToken);
   const user = useAppStore((s) => s.user);
+  const demoRuntimeMode = useAppStore((s) => s.demoRuntimeMode);
   const applyDelta = useAppStore((s) => s.applyChargerStatusDelta);
   const setWsConnected = useAppStore((s) => s.setWsConnected);
   const addToast = useAppStore((s) => s.addToast);
@@ -13,15 +16,25 @@ export function useWebSockets(onRefreshStations?: () => void) {
   const setStations = useAppStore((s) => s.setStations);
   const userLocation = useAppStore((s) => s.userLocation);
 
-  // Public live charger status stream
+  // Public live charger status stream (WebSocket in backend mode, local tick in standalone static mode)
   useEffect(() => {
+    if (demoRuntimeMode === 'standalone') {
+      setWsConnected(true);
+      const timer = window.setInterval(() => {
+        const delta = stepStaticDemoSimulator();
+        if (delta) {
+          applyDelta(delta.charger_id, delta.station_id, delta.status, delta.last_updated);
+        }
+      }, 6000);
+      return () => window.clearInterval(timer);
+    }
+
     let ws: WebSocket | null = null;
     let reconnectTimer: number | null = null;
     let closedByUser = false;
 
     const connect = () => {
-      const proto = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      ws = new WebSocket(`${proto}//${window.location.host}/ws/status`);
+      ws = new WebSocket(`${getWsBaseUrl()}/ws/status`);
 
       ws.onopen = () => {
         setWsConnected(true);
@@ -72,7 +85,7 @@ export function useWebSockets(onRefreshStations?: () => void) {
       if (reconnectTimer) window.clearTimeout(reconnectTimer);
       ws?.close();
     };
-  }, [applyDelta, onRefreshStations, setStations, setWsConnected, userLocation]);
+  }, [applyDelta, demoRuntimeMode, onRefreshStations, setStations, setWsConnected, userLocation]);
 
   // Authenticated private user notification & booking alert stream
   useEffect(() => {
@@ -89,9 +102,12 @@ export function useWebSockets(onRefreshStations?: () => void) {
     };
     fetchNotifications();
 
+    if (demoRuntimeMode === 'standalone') {
+      return;
+    }
+
     const connectPrivate = () => {
-      const proto = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      ws = new WebSocket(`${proto}//${window.location.host}/ws/me?token=${encodeURIComponent(accessToken)}`);
+      ws = new WebSocket(`${getWsBaseUrl()}/ws/me?token=${encodeURIComponent(accessToken)}`);
 
       ws.onmessage = (event) => {
         try {
@@ -143,5 +159,5 @@ export function useWebSockets(onRefreshStations?: () => void) {
       if (reconnectTimer) window.clearTimeout(reconnectTimer);
       ws?.close();
     };
-  }, [accessToken, addToast, setNotifications, user]);
+  }, [accessToken, addToast, demoRuntimeMode, setNotifications, user]);
 }

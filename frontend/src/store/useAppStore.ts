@@ -25,6 +25,7 @@ interface AppState {
   notifications: NotificationItem[];
   toasts: ToastMessage[];
   wsConnected: boolean;
+  demoRuntimeMode: 'backend' | 'standalone';
 
   assistantOpen: boolean;
   assistantDraftPrompt: string | null;
@@ -42,6 +43,7 @@ interface AppState {
   addToast: (toast: Omit<ToastMessage, 'id'>) => void;
   dismissToast: (id: string) => void;
   setWsConnected: (connected: boolean) => void;
+  setDemoRuntimeMode: (mode: 'backend' | 'standalone') => void;
   openAssistant: (prompt?: string) => void;
   closeAssistant: () => void;
   clearDraftPrompt: () => void;
@@ -90,6 +92,7 @@ export const useAppStore = create<AppState>((set) => ({
   notifications: [],
   toasts: [],
   wsConnected: false,
+  demoRuntimeMode: 'backend',
 
   assistantOpen: false,
   assistantDraftPrompt: null,
@@ -158,6 +161,7 @@ export const useAppStore = create<AppState>((set) => ({
     set((state) => ({ toasts: state.toasts.filter((t) => t.id !== id) })),
 
   setWsConnected: (wsConnected) => set({ wsConnected }),
+  setDemoRuntimeMode: (demoRuntimeMode) => set({ demoRuntimeMode }),
 
   openAssistant: (prompt) =>
     set({ assistantOpen: true, assistantDraftPrompt: prompt ?? null }),

@@ -49,6 +49,10 @@ Open **http://localhost:5173**
 docker-compose up --build
 ```
 
+### Option D — Vercel Frontend Deployment
+- Deploying the repository to **Vercel** (`npm run build` -> `dist`) automatically activates **Standalone Demo Mode** in the browser (using localStorage + a client-side live charger simulator) if no FastAPI backend is attached.
+- To connect a Vercel frontend to a separately hosted FastAPI backend (e.g. Render, Railway, or Fly.io), set `VITE_API_BASE_URL=https://your-fastapi-service.onrender.com` in Vercel Environment Variables and add your Vercel URL to `ALLOWED_ORIGINS` on the backend.
+
 ---
 
 ## Architecture

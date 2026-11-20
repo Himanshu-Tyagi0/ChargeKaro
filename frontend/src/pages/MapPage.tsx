@@ -61,6 +61,15 @@ export function MapPage() {
 
       const res = await apiClient.get<Station[]>('/stations', { params });
       setStations(res.data);
+      const currentSelected = useAppStore.getState().selectedStationId;
+      if (
+        res.data.length > 0 &&
+        (!currentSelected || !res.data.some((s) => s.id === currentSelected)) &&
+        typeof window !== 'undefined' &&
+        window.innerWidth >= 1024
+      ) {
+        setSelectedStationId(res.data[0].id);
+      }
       setLoadError(null);
     } catch {
       setLoadError('Stations are still warming up. Retrying automatically...');
@@ -311,6 +320,9 @@ export function MapPage() {
                     <span>From {formatInr(st.min_price_per_kwh)}/kWh</span>
                     <span>Up to {st.max_power_kw} kW</span>
                     <span>{st.opening_hours}</span>
+                  </div>
+                  <div className="mt-1.5 truncate font-mono text-[11px] text-slate-500 dark:text-slate-400">
+                    Ports: {Array.from(new Set(st.chargers.map((c) => c.connector_type))).join(' · ')}
                   </div>
                 </button>
               );
